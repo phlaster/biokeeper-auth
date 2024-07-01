@@ -7,9 +7,10 @@ CREATE TABLE user_role (
 );
 
 INSERT INTO user_role (name, info) VALUES
-    ('user', 'Regular user'),
-    ('admin', 'Administrator');
-    ('observer', 'Can only observe');
+    ('volunteer', 'User has contributed to researches'),
+    ('admin', 'User has administrative privileges');
+    ('observer', 'Default status for new users');
+
 
 
 CREATE TABLE "user" (
