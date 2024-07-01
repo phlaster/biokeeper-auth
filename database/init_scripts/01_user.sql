@@ -9,6 +9,7 @@ CREATE TABLE user_role (
 INSERT INTO user_role (name, info) VALUES
     ('user', 'Regular user'),
     ('admin', 'Administrator');
+    ('observer', 'Can only observe');
 
 
 CREATE TABLE "user" (
