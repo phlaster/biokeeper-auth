@@ -12,6 +12,7 @@ INSERT INTO user_role (name, info) VALUES
     ('observer', 'Default status for new users');
 
 
+
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
