@@ -1,8 +1,6 @@
 import base64
 import os
 
-from load_dotenv import load_dotenv
-
 def is_running_in_docker():
     return os.getenv('DOCKER_CONTAINER') is not None
 
@@ -10,12 +8,13 @@ def is_running_in_docker():
 if is_running_in_docker():
     POSTGRES_HOST = os.environ['POSTGRES_HOST']
     POSTGRES_PORT = os.environ['POSTGRES_PORT']
-
 else:
-    load_dotenv('biokeeper_auth/.db.env')
-    load_dotenv('biokeeper_auth/.rtoken.salt.env')
-    load_dotenv('jwt_keys/.jwt.private.env')
-    load_dotenv('jwt_keys/.jwt.public.env')
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from load_dotenv import load_dotenv
+    load_dotenv(os.path.join(BASE_DIR, 'biokeeper_auth', '.db.env'))
+    load_dotenv(os.path.join(BASE_DIR, 'biokeeper_auth', '.rtoken.salt.env'))
+    load_dotenv(os.path.join(BASE_DIR, 'jwt_keys', '.jwt.private.env'))
+    load_dotenv(os.path.join(BASE_DIR, 'jwt_keys', '.jwt.public.env'))
     POSTGRES_HOST = 'localhost'
     POSTGRES_PORT = '5555'
 
