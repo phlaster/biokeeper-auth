@@ -20,7 +20,6 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     last_password_update = Column(TIMESTAMP, nullable=False, server_default='CURRENT_TIMESTAMP')
     role_id = Column(Integer, ForeignKey('user_role.id'), nullable=False, default="1")
-    permissions = Column(Integer, nullable=False, server_default='0')
 
     role = relationship("UserRole")
 

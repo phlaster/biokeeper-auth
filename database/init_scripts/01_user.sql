@@ -7,10 +7,9 @@ CREATE TABLE user_role (
 );
 
 INSERT INTO user_role (name, info) VALUES
+    ('observer', 'Default status for new users'),
     ('volunteer', 'User has contributed to researches'),
     ('admin', 'User has administrative privileges');
-    ('observer', 'Default status for new users');
-
 
 
 CREATE TABLE "user" (
@@ -19,8 +18,7 @@ CREATE TABLE "user" (
     email TEXT UNIQUE NOT NULL,
     password_hash VARCHAR(128) NOT NULL,
     last_password_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    role_id INT REFERENCES user_role(id)  NOT NULL DEFAULT 1, -- Внешний ключ для роли пользователя
-    permissions INT NOT NULL DEFAULT 0
+    role_id INT REFERENCES user_role(id)  NOT NULL DEFAULT 1 -- Внешний ключ для роли пользователя
 );
 
 CREATE OR REPLACE FUNCTION update_last_password_update()

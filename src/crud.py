@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 import models, schemas
-
+import datetime
 from crypto import hash_password, check_password
 
 def get_user(db: Session, user_id: int):
@@ -27,8 +27,7 @@ def create_user(db: Session, user: schemas.UserCreate):
         username=user.username,
         email=user.email,
         password_hash= hash_password(user.password),
-        role_id = None,
-        permissions = None
+        role_id = None
     )
     db.add(db_user)
     db.commit()
@@ -63,3 +62,9 @@ def get_session_by_id(db, sessionId : int):
 def get_sessions_by_user_id(db, user_id : int):
     return db.query(models.Session).\
             filter(models.Session.user_id == user_id).all()
+
+def update_session_timestamp(db: Session, session: models.Session):
+    session.updated_at = datetime.datetime.now(datetime.timezone.utc)  # Устанавливаем текущее время в UTC формате
+    db.commit()  # Сохраняем изменения в базе данных
+    db.refresh(session)  # Обновляем объект session в текущей сессии
+    return session

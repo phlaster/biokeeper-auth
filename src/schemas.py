@@ -53,7 +53,6 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     role : Role
-    permissions: int
 
     class Config:
         from_attributes = True
