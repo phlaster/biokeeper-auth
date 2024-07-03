@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from src.main import app, create_access_token, create_refresh_token, hash_token
 from sqlalchemy.orm import Session
-from src.models import User, Role
+from src.models import User, UserRole
 import src.crud as crud
 
 client = TestClient(app)
@@ -24,7 +24,7 @@ def db():
 
 @pytest.fixture(scope="module")
 def test_user(db: Session):
-    role = Role(name="test_role")
+    role = UserRole(name="test_role")
     db.add(role)
     db.commit()
     db.refresh(role)
