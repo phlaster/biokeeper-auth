@@ -104,6 +104,8 @@ async def refresh_token(refresh_request: RefreshRequest, db: Session = Depends(g
 
         user_response = create_user_response(db_user)
         access_token = create_access_token(user_response)
+        crud.update_session_timestamp(db, session)
+
         return UpdateTokenResponse(access_token=access_token)
 
     except jwt.ExpiredSignatureError:
