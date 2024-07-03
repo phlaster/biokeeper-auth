@@ -83,9 +83,14 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     access_token = create_access_token(user_response)
     refresh_token = create_refresh_token(user_response)
 
-    device_ip = request.headers.get('X-Real-IP')
-    if not device_ip:
-        device_ip = request.headers.get('X-Forwarded-For')
+    if request.headers.get('X-Real-IP') is None:
+        if request.client.host is None:
+            device_ip = 'unknown_ip'
+        else:
+            device_ip = request.client.host
+    else:
+        device_ip = request.headers.get('X-Real-IP')
+
     device_info = parse_user_agent(request.headers.get('User-Agent'))
 
     crud.create_session(db, db_user.id, hash_token(refresh_token), device_ip, device_info)
