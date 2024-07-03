@@ -21,7 +21,7 @@ def create_jwt_token(user: UserResponse, type : str = 'access'):
         payload = user.model_dump(exclude={'email'})
     else:
         time_delta = datetime.timedelta(days=20)
-        payload = user.model_dump(exclude={'email', 'username', 'role', 'permissions'})
+        payload = user.model_dump(exclude={'email', 'username', 'role'})
     payload['exp'] = datetime.datetime.now(datetime.timezone.utc) + time_delta
     # Подписываем токен приватным ключом
     token = jwt.encode(payload, JWT_PRIVATE_KEY, algorithm='RS256')
