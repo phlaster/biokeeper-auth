@@ -21,7 +21,7 @@ def db():
     yield db
     db.close()
 
-# !! Пока что закомментил эти тесты, так как хз, нужны ли они
+# !! Пока что закомментил эти фикстуры, их надо переписать
 # @pytest.fixture(scope="module")
 # def test_user(db: Session):
 #     role = UserRole(name="test_role")
@@ -52,6 +52,9 @@ def test_create_user():
     # 4) запрос с уже зарегнным email
     # 5) разные пароли
     # 6) полностью валидный запрос
+    #
+    # Точнее разделить это на несколько тестов, те которые ожидаем провальными делать 
+    # c декоратором @pytest.mark.xfail
     response = client.post("/create", json={"username": "correct_user", "email": "correct_user@example.com", 
                                             "password": "c0rRect_password", "password2": "c0rRect_password"})
     assert response.status_code == 200
@@ -67,6 +70,9 @@ def test_login_for_access_token(test_user):
     # здесь надо протестить:
     # 1) Тест логина с неправильным паролем
     # 2) Тест логина с правильным паролем
+    #
+    # Точнее разделить это на несколько тестов, те которые ожидаем провальными делать 
+    # c декоратором @pytest.mark.xfail
     response = client.post("/token", data={"username": "correct_user", "password": "c0rRect_password"})
     assert response.status_code == 200
     data = response.json()
