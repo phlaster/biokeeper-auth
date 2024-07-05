@@ -21,45 +21,65 @@ def db():
     yield db
     db.close()
 
-@pytest.fixture(scope="module")
-def test_user(db: Session):
-    role = UserRole(name="test_role")
-    db.add(role)
-    db.commit()
-    db.refresh(role)
-    user = User(username="testuser", email="testuser@example.com", password_hash="hashedpassword", role_id=role.id)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+# !! Пока что закомментил эти тесты, так как хз, нужны ли они
+# @pytest.fixture(scope="module")
+# def test_user(db: Session):
+#     role = UserRole(name="test_role")
+#     db.add(role)
+#     db.commit()
+#     db.refresh(role)
+#     user = User(username="testuser", email="testuser@example.com", password_hash="hashedpassword", role_id=role.id)
+#     db.add(user)
+#     db.commit()
+#     db.refresh(user)
+#     return user
 
-@pytest.fixture(scope="module")
-def access_token(test_user):
-    return create_access_token(test_user)
+# @pytest.fixture(scope="module")
+# def access_token(test_user):
+#     return create_access_token(test_user)
 
-@pytest.fixture(scope="module")
-def refresh_token(test_user):
-    return create_refresh_token(test_user)
+# @pytest.fixture(scope="module")
+# def refresh_token(test_user):
+#     return create_refresh_token(test_user)
+# !! Пока что закомментил эти тесты, так как хз, нужны ли они
 
-def test_create_user(db):
-    response = client.post("/create", json={"username": "newuser", "email": "newuser@example.com", "password": "newpAssword4_", "password2": "newpAssword4_"})
+def test_create_user():
+    # TODO
+    # здесь надо протестить 
+    # 1) запрос с отсутствующими полями (все комбинации)
+    # 2) запрос с невалидным паролем (нет спец символа, невалидное количество символов, нет цифры)
+    # 3) запрос с уже зарегнным юзернеймом
+    # 4) запрос с уже зарегнным email
+    # 5) разные пароли
+    # 6) полностью валидный запрос
+    response = client.post("/create", json={"username": "correct_user", "email": "correct_user@example.com", 
+                                            "password": "c0rRect_password", "password2": "c0rRect_password"})
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == "newuser"
-    assert data["email"] == "newuser@example.com"
+    assert data["username"] == "correct_user"
+    assert data["email"] == "correct_user@example.com"
 
-def test_login_for_access_token(db, test_user):
-    response = client.post("/token", data={"username": test_user.username, "password": "hashedpassword"})
+def test_login_for_access_token(test_user):
+    # TODO
+    # не нужно передавать захешированный пароль, это тест логина, 
+    # он просто по паролю производится, надо передавать такой же пароль как 
+    # и в предыдущем тесте (при создании пользователя)
+    # здесь надо протестить:
+    # 1) Тест логина с неправильным паролем
+    # 2) Тест логина с правильным паролем
+    response = client.post("/token", data={"username": "correct_user", "password": "c0rRect_password"})
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert "refresh_token" in data
 
-# def test_refresh_token(db, refresh_token):
-#     response = client.post("/refresh", json={"refresh_token": refresh_token})
-#     assert response.status_code == 200
-#     data = response.json()
-#     assert "access_token" in data
+def test_refresh_token(db, refresh_token):
+    # TODO: разобраться как соединять разные тесты между собой, 
+    # в частности как взять рефреш токен сюда, разобраться в ФИКСТУРАХ
+    response = client.post("/refresh", json={"refresh_token": refresh_token})
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
 
 # def test_get_my_sessions(db, access_token):
 #     headers = {"Authorization": f"Bearer {access_token}"}
