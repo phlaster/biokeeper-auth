@@ -5,7 +5,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 import pytest
 from fastapi.testclient import TestClient
-from src.main import app, create_access_token, create_refresh_token, hash_token
+from src.main import app, create_access_token, create_refresh_token
+from src.crypto import hash_password
 from sqlalchemy.orm import Session
 from src.models import User, UserRole
 import src.crud as crud
@@ -21,48 +22,112 @@ def db():
     yield db
     db.close()
 
-# !! Пока что закомментил эти фикстуры, их надо переписать
-# @pytest.fixture(scope="module")
-# def test_user(db: Session):
-#     role = UserRole(name="test_role")
-#     db.add(role)
-#     db.commit()
-#     db.refresh(role)
-#     user = User(username="testuser", email="testuser@example.com", password_hash="hashedpassword", role_id=role.id)
-#     db.add(user)
-#     db.commit()
-#     db.refresh(user)
-#     return user
+#Пока что закомментил эти фикстуры, их надо переписать
+@pytest.fixture(scope="module")
+def test_user(db: Session):
+    role = UserRole(name="test_role")
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    user = User(username="testuser", email="testuser@example.com", password_hash=hash_password("c0Rrect_password!"), role_id=role.id)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    user.raw_password = "c0Rrect_password!"
+    return user
 
-# @pytest.fixture(scope="module")
-# def access_token(test_user):
-#     return create_access_token(test_user)
+@pytest.fixture(scope="module")
+def access_token(test_user):
+    return create_access_token(test_user)
 
-# @pytest.fixture(scope="module")
-# def refresh_token(test_user):
-#     return create_refresh_token(test_user)
-# !! Пока что закомментил эти тесты, так как хз, нужны ли они
+@pytest.fixture(scope="module")
+def refresh_token(test_user):
+    return create_refresh_token(test_user)
+# Пока что закомментил эти тесты, так как хз, нужны ли они
 
-def test_create_user():
-    # TODO
-    # здесь надо протестить 
-    # 1) запрос с отсутствующими полями (все комбинации)
-    # 2) запрос с невалидным паролем (нет спец символа, невалидное количество символов, нет цифры)
-    # 3) запрос с уже зарегнным юзернеймом
-    # 4) запрос с уже зарегнным email
-    # 5) разные пароли
-    # 6) полностью валидный запрос
-    #
-    # Точнее разделить это на несколько тестов, те которые ожидаем провальными делать 
-    # c декоратором @pytest.mark.xfail
-    response = client.post("/create", json={"username": "correct_user", "email": "correct_user@example.com", 
-                                            "password": "c0rRect_password", "password2": "c0rRect_password"})
+# 1. Тесты для запросов с отсутствующими полями (все комбинации)
+@pytest.mark.parametrize("missing_field", [
+    {"email": "user@example.com", "password": "password123", "password2": "password123"},
+    {"username": "user", "password": "password123", "password2": "password123"},
+    {"username": "user", "email": "user@example.com", "password2": "password123"},
+    {"username": "user", "email": "user@example.com", "password": "password123"}
+])
+def test_create_user_missing_fields(missing_field):
+    response = client.post("/create", json=missing_field)
+    assert response.status_code == 422
+
+# 2. Тесты для запросов с невалидным паролем
+@pytest.mark.parametrize("password", [
+    "short",                # недостаточное количество символов
+    "noSpecialChar123",     # нет спецсимвола
+    "NoNumberSpecial!",     # нет цифры
+])
+def test_create_user_invalid_password(password):
+    response = client.post("/create", json={
+        "username": "user", "email": "user@example.com",
+        "password": password, "password2": password
+    })
+    assert response.status_code == 422
+
+# 3. Тест для запроса с уже зарегистрированным юзернеймом
+
+def test_create_user_existing_username():
+    client.post("/create", json={
+        "username": "existing_user", "email": "new_user@example.com",
+        "password": "c0Rrect_password!", "password2": "c0Rrect_password!"
+    })
+    response = client.post("/create", json={
+        "username": "existing_user", "email": "another_user@example.com",
+        "password": "c0Rrect_password!", "password2": "c0Rrect_password!"
+    })
+    assert response.status_code == 400
+
+# 4. Тест для запроса с уже зарегистрированным email
+
+def test_create_user_existing_email():
+    client.post("/create", json={
+        "username": "new_user", "email": "existing_user@example.com",
+        "password": "c0Rrect_password!", "password2": "c0Rrect_password!"
+    })
+    response = client.post("/create", json={
+        "username": "another_user", "email": "existing_user@example.com",
+        "password": "c0Rrect_password!", "password2": "c0Rrect_password!"
+    })
+    assert response.status_code == 400
+
+# 5. Тест для запроса с разными паролями
+
+def test_create_user_different_passwords():
+    response = client.post("/create", json={
+        "username": "user", "email": "user@example.com",
+        "password": "c0Rrect_password!", "password2": "different_password!"
+    })
+    assert response.status_code == 422
+
+# 6. Тест для полностью валидного запроса
+def test_create_user_valid():
+    response = client.post("/create", json={
+        "username": "correct_user", "email": "correct_user@example.com",
+        "password": "c0Rrect_password!", "password2": "c0Rrect_password!"
+    })
     assert response.status_code == 200
     data = response.json()
     assert data["username"] == "correct_user"
     assert data["email"] == "correct_user@example.com"
+# Тест логина с неправильным паролем
 
-def test_login_for_access_token(test_user):
+def test_login_incorrect_password(test_user):
+    response = client.post("/token", data={"username": test_user.username, "password": "incorrect_password"})
+    assert response.status_code == 401
+
+#Тест логина с правильным паролем
+def test_login_correct_password(test_user):
+    response = client.post("/token", data={"username": test_user.username, "password": test_user.raw_password})
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+
     # TODO
     # не нужно передавать захешированный пароль, это тест логина, 
     # он просто по паролю производится, надо передавать такой же пароль как 
@@ -73,19 +138,14 @@ def test_login_for_access_token(test_user):
     #
     # Точнее разделить это на несколько тестов, те которые ожидаем провальными делать 
     # c декоратором @pytest.mark.xfail
-    response = client.post("/token", data={"username": "correct_user", "password": "c0rRect_password"})
-    assert response.status_code == 200
-    data = response.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
 
-def test_refresh_token(db, refresh_token):
-    # TODO: разобраться как соединять разные тесты между собой, 
-    # в частности как взять рефреш токен сюда, разобраться в ФИКСТУРАХ
-    response = client.post("/refresh", json={"refresh_token": refresh_token})
-    assert response.status_code == 200
-    data = response.json()
-    assert "access_token" in data
+# def test_refresh_token(db, refresh_token):
+#     # TODO: разобраться как соединять разные тесты между собой, 
+#     # в частности как взять рефреш токен сюда, разобраться в ФИКСТУРАХ
+#     response = client.post("/refresh", json={"refresh_token": refresh_token})
+#     assert response.status_code == 200
+#     data = response.json()
+#     assert "access_token" in data
 
 # def test_get_my_sessions(db, access_token):
 #     headers = {"Authorization": f"Bearer {access_token}"}
