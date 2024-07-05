@@ -19,5 +19,6 @@ pip install -r requirements_test.txt
 
 **Run test:**
 ```sh
-pytest -s test.py
+cd biokeeper
+docker compose -f docker-compose-tests.yaml down && docker compose -f docker-compose-tests.yaml up
 ```
