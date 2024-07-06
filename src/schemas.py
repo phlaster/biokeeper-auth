@@ -76,6 +76,9 @@ class LogoutRequest(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
+class CreatedAtResponse(BaseModel):
+    created_at: datetime
+
 
 class SessionBase(BaseModel):
     id: int

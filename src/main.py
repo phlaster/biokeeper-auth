@@ -8,11 +8,11 @@ import jwt
 from mq import publish_user_created
 
 from crypto import check_password, create_access_token, create_refresh_token, hash_token, verify_jwt_token
-from schemas import LoginResponse, LogoutRequest, MySessionsResponse, RefreshRequest, RevokeTokenRequest, Role, SessionBase, UpdateTokenResponse, UserCreate, UserResponse
+from schemas import CreatedAtResponse, LoginResponse, LogoutRequest, MySessionsResponse, RefreshRequest, RevokeTokenRequest, Role, SessionBase, UpdateTokenResponse, UserCreate, UserResponse
 from database import SessionLocal
 import crud
 import models
-from utils import parse_user_agent
+from utils import is_internal_ip, parse_user_agent
 
 app = FastAPI()
 
@@ -27,6 +27,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
@@ -171,6 +172,31 @@ async def my_sessions(current_user: Annotated[UserResponse, Depends(get_current_
     sessions = crud.get_sessions_by_user_id(db, current_user.id)
     sessions_list = [SessionBase(**session.__dict__) for session in sessions]
     return MySessionsResponse(sessions=sessions_list)
+
+
+async def internal_use_only_dependency(request: Request):
+    client_host = request.client.host
+    print(client_host)
+    if not is_internal_ip(client_host):
+        raise HTTPException(status_code=403, detail="Forbidden: Access is restricted to internal services.")
+    return request
+
+
+@app.get('/users/{id}/role', dependencies=[Depends(internal_use_only_dependency)])
+async def get_user_role(id: int, db = Depends(get_db)) -> Role:
+    db_user = crud.get_user_by_id(db, id=id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    role = Role.model_validate(db_user.role.__dict__)
+    return role
+
+@app.get('/users/{id}/created_at', dependencies=[Depends(internal_use_only_dependency)])
+async def get_user_created_at(id: int, db = Depends(get_db)) -> CreatedAtResponse:
+    db_user = crud.get_user_by_id(db, id=id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # get crated at from db_user:
+    return CreatedAtResponse(**db_user.__dict__)
 
 if __name__ == "__main__":
     import uvicorn
