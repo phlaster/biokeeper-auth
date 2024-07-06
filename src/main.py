@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from typing import Annotated, List
 import jwt
 
+from mq import publish_user_created
+
 from crypto import check_password, create_access_token, create_refresh_token, hash_token, verify_jwt_token
 from schemas import LoginResponse, LogoutRequest, MySessionsResponse, RefreshRequest, RevokeTokenRequest, Role, SessionBase, UpdateTokenResponse, UserCreate, UserResponse
 from database import SessionLocal
@@ -72,7 +74,9 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    return crud.create_user(db=db, user=user)
+    db_user = crud.create_user(db=db, user=user)
+    publish_user_created(db_user.id, db_user.username)
+    return db_user
 
 @app.post("/token", response_model=LoginResponse)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
