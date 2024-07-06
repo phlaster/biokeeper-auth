@@ -17,5 +17,3 @@ def is_internal_ip(ip: str) -> bool:
 
     client_ip = ipaddress.ip_address(ip)
     return client_ip in internal_ips
-
-    # return any(client_ip in network for network in internal_networks)
