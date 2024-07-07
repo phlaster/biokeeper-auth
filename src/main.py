@@ -8,7 +8,7 @@ import jwt
 from mq import publish_user_created
 
 from crypto import check_password, create_access_token, create_refresh_token, hash_token, verify_jwt_token
-from schemas import CreatedAtResponse, LoginResponse, LogoutRequest, MySessionsResponse, RefreshRequest, RevokeTokenRequest, Role, SessionBase, UpdateTokenResponse, UserCreate, UserResponse
+from schemas import CreatedAtResponse, LoginResponse, LogoutRequest, MySessionsResponse, RefreshRequest, RevokeTokenRequest, Role, SessionBase, UpdateTokenResponse, UserCreate, UserCreatedMqMessage, UserResponse
 from database import SessionLocal
 import crud
 import models
@@ -76,7 +76,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     db_user = crud.create_user(db=db, user=user)
-    publish_user_created(db_user.id, db_user.username)
+    publish_user_created(UserCreatedMqMessage(**db_user.__dict__))
     return db_user
 
 @app.post("/token", response_model=LoginResponse)

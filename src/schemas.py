@@ -58,6 +58,12 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
+class UserCreatedMqMessage(BaseModel):
+    id: int
+    username: str
+    
+
+
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -90,3 +96,4 @@ class SessionBase(BaseModel):
 
 class MySessionsResponse(BaseModel):
     sessions: list[SessionBase] = []
+
