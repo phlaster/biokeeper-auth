@@ -19,6 +19,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     last_password_update = Column(TIMESTAMP, nullable=False, server_default='CURRENT_TIMESTAMP')
+    created_at = Column(TIMESTAMP, nullable=False, server_default='CURRENT_TIMESTAMP')
     role_id = Column(Integer, ForeignKey('user_role.id'), nullable=False, default="1")
 
     role = relationship("UserRole")

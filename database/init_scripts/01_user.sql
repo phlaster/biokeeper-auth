@@ -18,6 +18,7 @@ CREATE TABLE "user" (
     email TEXT UNIQUE NOT NULL,
     password_hash VARCHAR(128) NOT NULL,
     last_password_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     role_id INT REFERENCES user_role(id)  NOT NULL DEFAULT 1 -- Внешний ключ для роли пользователя
 );
 
