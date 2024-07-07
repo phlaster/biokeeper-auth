@@ -14,7 +14,18 @@ import crud
 import models
 from utils import is_internal_ip, parse_user_agent
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url = None)
+
+from routers.docs import get_current_username, get_swagger_ui_html, get_openapi
+
+@app.get("/docs", include_in_schema=False)
+async def get_documentation(username: str = Depends(get_current_username)):
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="docs")
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def openapi(username: str = Depends(get_current_username)):
+    return get_openapi(title = "FastAPI", version="0.1.0", routes=app.routes)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,7 +38,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
@@ -178,7 +188,7 @@ async def internal_use_only_dependency(request: Request):
     client_host = request.client.host
     print(client_host)
     if not is_internal_ip(client_host):
-        raise HTTPException(status_code=403, detail="Forbidden: Access is restricted to internal services.")
+        raise HTTPException(status_code=403, detail="Forbidden: Access is only allowed to internal services.")
     return request
 
 
