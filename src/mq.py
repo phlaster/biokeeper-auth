@@ -1,6 +1,7 @@
 import pika
+from config import RABBITMQ_AUTH_USER, RABBITMQ_AUTH_PASS
 
-credentials = pika.PlainCredentials('testuser', 'testpassword')
+credentials = pika.PlainCredentials(RABBITMQ_AUTH_USER, RABBITMQ_AUTH_PASS)
 rabbitmq_params = pika.ConnectionParameters(host='biokeeper_mq', port=5672,
                                             virtual_host='microservices',
                                             credentials=credentials)
