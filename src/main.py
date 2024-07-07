@@ -188,7 +188,7 @@ async def internal_use_only_dependency(request: Request):
     client_host = request.client.host
     print(client_host)
     if not is_internal_ip(client_host):
-        raise HTTPException(status_code=403, detail="Forbidden: Access is restricted to internal services.")
+        raise HTTPException(status_code=403, detail="Forbidden: Access is only allowed to internal services.")
     return request
 
 
