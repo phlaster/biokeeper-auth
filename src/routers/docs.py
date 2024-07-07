@@ -9,12 +9,13 @@ import secrets
 
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from config import PASSWORD_FOR_FASTAPI_DOCS
 
 security = HTTPBasic()
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, "docuser")
-    correct_password = secrets.compare_digest(credentials.password, "password")
+    correct_password = secrets.compare_digest(credentials.password, PASSWORD_FOR_FASTAPI_DOCS)
     if not (correct_username and correct_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
