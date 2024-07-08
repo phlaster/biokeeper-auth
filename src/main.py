@@ -208,6 +208,39 @@ async def get_user_created_at(id: int, db = Depends(get_db)) -> CreatedAtRespons
     # get crated at from db_user:
     return CreatedAtResponse(**db_user.__dict__)
 
+
+@app.put('/users/{id}/role/volunteer')
+async def set_volunteer_role(current_user: Annotated[UserResponse, Depends(get_current_user)], user_id: int, db = Depends(get_db)):
+    if current_user.role.name != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can set other users as volunteers")
+    db_user = crud.get_user_by_id(db, id=user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if db_user.role.name == "admin":
+        raise HTTPException(status_code=409, detail=f"User {user_id} is already a admin. You can't set him as a volunteer.")
+    if db_user.role.name == "volunteer":
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"message": f"User {user_id} is already a volunteer."})
+    db_user.role = crud.get_role_by_name(db, name="volunteer")
+    db_user.role_id = db_user.role.id
+    db.commit()
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": f"User {user_id} is now a voluteer."})
+
+
+# @app.put('/users/{id}/role/admin', dependencies=[Depends(internal_use_only_dependency)])
+# async def set_volunteer_role(current_user: Annotated[UserResponse, Depends(get_current_user)], user_id: int, db = Depends(get_db)):
+#     if current_user.role != "admin":
+#         raise HTTPException(status_code=403, detail="Only admins can set other users as admin")
+#     db_user = crud.get_user_by_id(db, id=user_id)
+#     if not db_user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     if db_user.role.name == "admin":
+#         return JSONResponse(status_code=status.HTTP_200_OK, content={"message": f"User {user_id} is already an admin."})
+    
+    # db_user.role = crud.get_role_by_name(db, name="admin")
+    # db_user.role_id = db_user.role.id
+    # db.commit()
+    # return JSONResponse(status_code=status.HTTP_200_OK, content={"message": f"User {user_id} is now an admin."})
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

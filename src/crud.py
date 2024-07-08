@@ -68,3 +68,6 @@ def update_session_timestamp(db: Session, session: models.Session):
     db.commit()  # Сохраняем изменения в базе данных
     db.refresh(session)  # Обновляем объект session в текущей сессии
     return session
+
+def get_role_by_name(db: Session, name):
+    return db.query(models.UserRole).filter(models.UserRole.name == name).first()
